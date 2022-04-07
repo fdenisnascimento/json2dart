@@ -93,7 +93,7 @@ async function convertToDart(folder?: string, file?: string) {
 		const file = outputFileSync(filePath, code);
 		vscode.window.showInformationMessage(`Converting done...`);
 	} catch (e) {
-		vscode.window.showErrorMessage(e.toString());
+		vscode.window.showErrorMessage((e as Error).message);
 	}
 }
 

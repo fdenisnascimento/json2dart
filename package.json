@@ -95,5 +95,8 @@
 		"vscode-test": "^1.4.1",
 		"webpack": "^5.10.0",
 		"webpack-cli": "^4.2.0"
+	},
+	"dependencies": {
+		"lodash": "^4.17.21"
 	}
 }
