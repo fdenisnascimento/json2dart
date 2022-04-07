@@ -2,7 +2,7 @@
 	"name": "json4dart",
 	"displayName": "FDN Json 4 Dart",
 	"description": "Plain object to Dart Object",
-	"version": "0.0.2",
+	"version": "1.0.0",
 	"publisher": "fdenisnascimento",
 	"keywords": [
 		"json",
@@ -13,7 +13,7 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/fdenisnascimento/json2dart.git"
+		"url": "https://github.com/fdenisnascimento/json4dart.git"
 	},
 	"engines": {
 		"vscode": "^1.52.0"
@@ -22,9 +22,9 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:json2dart.convertFromClipboard",
-		"onCommand:json2dart.convertFromClipboardToFile",
-		"onCommand:json2dart.convertFromClipboardToFolder"
+		"onCommand:json4dart.convertFromClipboard",
+		"onCommand:json4dart.convertFromClipboardToFile",
+		"onCommand:json4dart.convertFromClipboardToFolder"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
@@ -32,34 +32,34 @@
 			"explorer/context": [
 				{
 					"when": "resourceLangId == dart",
-					"command": "json2dart.convertFromClipboardToFile",
-					"group": "json2dart@1"
+					"command": "json4dart.convertFromClipboardToFile",
+					"group": "json4dart@1"
 				},
 				{
 					"when": "explorerResourceIsFolder",
-					"command": "json2dart.convertFromClipboardToFolder",
-					"group": "json2dart@1"
+					"command": "json4dart.convertFromClipboardToFolder",
+					"group": "json4dart@1"
 				}
 			],
 			"editor/context": [
 				{
 					"when": "resourceLangId == dart",
-					"command": "json2dart.convertFromClipboardToFile",
-					"group": "json2dart@1"
+					"command": "json4dart.convertFromClipboardToFile",
+					"group": "json4dart@1"
 				}
 			]
 		},
 		"commands": [
 			{
-				"command": "json2dart.convertFromClipboard",
-				"title": "json2dart: Convert JSON from Clipboard"
+				"command": "json4dart.convertFromClipboard",
+				"title": "json4dart: Convert JSON from Clipboard"
 			},
 			{
-				"command": "json2dart.convertFromClipboardToFile",
+				"command": "json4dart.convertFromClipboardToFile",
 				"title": "Convert JSON from Clipboard Here"
 			},
 			{
-				"command": "json2dart.convertFromClipboardToFolder",
+				"command": "json4dart.convertFromClipboardToFolder",
 				"title": "Convert JSON from Clipboard Here"
 			}
 		]
@@ -81,7 +81,7 @@
 		"@types/glob": "^7.1.3",
 		"@types/lodash": "^4.14.167",
 		"@types/mocha": "^8.0.4",
-		"@types/node": "^12.11.7",
+		"@types/node": "^12.20.47",
 		"@types/vscode": "^1.52.0",
 		"@types/yaml": "^1.9.7",
 		"@typescript-eslint/eslint-plugin": "^4.9.0",
