@@ -1,0 +1,7 @@
+out
+node_modules
+.vscode-test/
+*.vsix
+.yarnrc
+yarn.lock
+package-lock.json
