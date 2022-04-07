@@ -10,12 +10,14 @@ class JsonToDart {
     mergeArrayApproach: boolean = true;
     nullValueDataType: String;
     handlerSymbol: String;
-    constructor(tabSize: number, shouldCheckType?: boolean, nullValueDataType?: String, nullSafety?: boolean) {
+    shouldCheckIsNull: boolean;
+    constructor(tabSize: number, shouldCheckType?: boolean, nullValueDataType?: String, nullSafety?: boolean, shouldCheckIsNull?: boolean) {
         this.indentText = " ".repeat(tabSize);
         this.shouldCheckType = shouldCheckType ?? false;
         this.nullValueDataType = nullValueDataType ?? "dynamic";
         this.nullSafety = nullSafety ?? true;
         this.handlerSymbol = nullSafety ? "?" : "";
+        this.shouldCheckIsNull = shouldCheckIsNull ?? false;
     }
 
     setIncludeCopyWitMethod(b: boolean) {
@@ -41,7 +43,8 @@ class JsonToDart {
         } else if (Number.isInteger(value)) {
             type = "int";
             typeObj.isPrimitive = true;
-        } else if ((typeof value) === "number") {
+        }
+        else if ((typeof value) === "number") {
             type = "double";
             typeObj.isPrimitive = true;
         } else if ((typeof value) === "string") {
@@ -101,12 +104,17 @@ class JsonToDart {
                 const typeObj = this.findDataType(key, value);
                 const type = `${typeObj.type}${this.handlerSymbol}`;
                 const paramName = camelcase(key);
-                parameters.push(this.toCode(1, type, paramName));
+                if (type != 'dynamic') {
+                    parameters.push(this.toCode(1, `${type}?`, paramName));
+                } else {
+                    parameters.push(this.toCode(1, type, paramName));
+                }
+
                 this.addFromJsonCode(key, typeObj, fromJsonCode);
                 this.addToJsonCode(key, typeObj, toJsonCode);
                 if (this.includeCopyWitMethod) {
                     parametersForMethod.push(this.toMethodParams(2, type, paramName));
-                    copyWithAssign.push(`${this.indent(2)}${paramName}: ${paramName} ?? ${paramName}`);
+                    copyWithAssign.push(`${this.indent(2)}${paramName}: ${paramName} ?? this.${paramName}`);
 
                 }
                 constructorInit.push(`this.${paramName}`);
@@ -134,9 +142,9 @@ ${fromJsonCode.join("\n")}
 ${this.indent(1)}}
 
 ${this.indent(1)}Map<String, dynamic> toJson() {
-${this.indent(2)}final Map<String, dynamic> data =  <String, dynamic>{};
+${this.indent(2)}final Map<String, dynamic> _data =  <String, dynamic>{};
 ${toJsonCode.join("\n")}
-${this.indent(2)}return data;
+${this.indent(2)}return _data;
 ${this.indent(1)}}${this.includeCopyWitMethod ? copyWithCode : ""}
 }`;
 
@@ -162,7 +170,7 @@ ${this.indent(1)}}${this.includeCopyWitMethod ? copyWithCode : ""}
     r = (type: TypeObj): String => {
 
         if (type.typeRef !== undefined) {
-            return `(e)=>e==null?[]:(e as List).map(${this.r(type.typeRef)}).toList()`;
+            return `(e)=> e == null ? [] : (e as List).map(${this.r(type.typeRef)}).toList()`;
         }
         return `(e)=>${type.type}.fromJson(e)`;
     };
@@ -178,18 +186,18 @@ ${this.indent(1)}}${this.includeCopyWitMethod ? copyWithCode : ""}
 
     addFromJsonCode(key: String, typeObj: TypeObj, fromJsonCode: Array<String>) {
         const type = typeObj.type;
-        const paramName = `this.${camelcase(key)}`;
+        const paramName = `${camelcase(key)}`;
         let indentTab = 2;
-        if (this.shouldCheckType && type !== "dynamic") {
-            indentTab = 3;
-            if (typeObj.isObject) {
-                fromJsonCode.push(this.toCondition(2, `if(json['${key}'] is Map)`));
-            } else if (typeObj.isArray) {
-                fromJsonCode.push(this.toCondition(2, `if(json['${key}'] is List)`));
-            } else {
-                fromJsonCode.push(this.toCondition(2, `if(json['${key}'] is ${type})`));
-            }
-        }
+        // if (this.shouldCheckType && type !== "dynamic") {
+        //     indentTab = 3;
+        //     if (typeObj.isObject) {
+        //         fromJsonCode.push(this.toCondition(2, `if(json['${key}'] is Map)`));
+        //     } else if (typeObj.isArray) {
+        //         fromJsonCode.push(this.toCondition(2, `if(json['${key}'] is List)`));
+        //     } else {
+        //         fromJsonCode.push(this.toCondition(2, `if(json['${key}'] is ${type})`));
+        //     }
+        // }
         if (typeObj.isObject) {
             fromJsonCode.push(this.toCode(indentTab,
                 paramName, "=", `json['${key}'] == null ? null : ${type}.fromJson(json['${key}'])`));
@@ -200,10 +208,10 @@ ${this.indent(1)}}${this.includeCopyWitMethod ? copyWithCode : ""}
                     paramName, "=", `json['${key}'] ?? []`));
             } else if (typeObj.isPrimitive) {
                 fromJsonCode.push(this.toCode(indentTab,
-                    paramName, "=", `json['${key}']==null ? null : List<${typeObj.typeRef.type}>.from(json['${key}'])`));
+                    paramName, "=", `List<${typeObj.typeRef.type}>.from(json['${key}'])`));
             } else {
                 fromJsonCode.push(this.toCode(indentTab,
-                    paramName, "=", `json['${key}']==null ? null : (json['${key}'] as List).map(${this.r(typeObj.typeRef)}).toList()`));
+                    paramName, "=", `(json['${key}'] as List).map(${this.r(typeObj.typeRef)}).toList()`));
             }
         }
         else {
@@ -212,22 +220,20 @@ ${this.indent(1)}}${this.includeCopyWitMethod ? copyWithCode : ""}
     }
 
     addToJsonCode(key: String, typeObj: TypeObj, fromJsonCode: Array<String>) {
-        const paramName = `this.${camelcase(key)}`;
-        const paramCode = `data["${key}']`;
+        const paramName = `${camelcase(key)}`;
+        const paramCode = `_data['${key}']`;
         if (typeObj.isObject) {
-            fromJsonCode.push(this.toCondition(2, `if(${paramName} != null)`));
             fromJsonCode.push(this.toCode(3,
-                paramCode, "=", `${paramName}${this.handlerSymbol}.toJson()`));
+                paramCode, "=", `${paramName}${this.handlerSymbol}?.toJson()`));
         }
         else if (typeObj.isArray) {
-            fromJsonCode.push(this.toCondition(2, `if(${paramName} != null)`));
             if (typeObj.isPrimitive || typeObj.typeRef === undefined) {
                 fromJsonCode.push(this.toCode(3,
                     paramCode, "=", paramName));
             } else {
                 fromJsonCode.push(this.toCode(3,
                     paramCode, "=",
-                    `${paramName}${this.handlerSymbol}.map(${this.p(typeObj.typeRef)}).toList()`));
+                    `${paramName}${this.handlerSymbol}?.map(${this.p(typeObj.typeRef)}).toList()`));
             }
         }
         else {

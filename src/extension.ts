@@ -55,6 +55,11 @@ async function convertToDart(folder?: string, file?: string) {
 			placeHolder: "Need type checking?"
 		}) === "Yes");
 
+	const checkIsNull = jsonToDartConfig.typeChecking ??
+		(await vscode.window.showQuickPick(["Yes", "No"], {
+			placeHolder: "Need check nullable?"
+		}) === "Yes");
+
 	const packageAndClass = value?.toString() ?? "";
 
 	const paths = packageAndClass.split(".");
@@ -81,7 +86,7 @@ async function convertToDart(folder?: string, file?: string) {
 		const copyWithMethod = jsonToDartConfig.copyWithMethod ?? false;
 		const nullValueDataType = jsonToDartConfig.nullValueDataType;
 		const { tabSize } = vscode.workspace.getConfiguration("editor", { languageId: "dart" });
-		const converter = new JsonToDart(tabSize, typeCheck, nullValueDataType, nullSafety);
+		const converter = new JsonToDart(tabSize, typeCheck, nullValueDataType, nullSafety, checkIsNull);
 		converter.setIncludeCopyWitMethod(copyWithMethod);
 		converter.setMergeArrayApproach(mergeArrayApproach);
 		const code = converter.parse(className, obj).map(r => r.code).join("\n");
