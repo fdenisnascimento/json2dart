@@ -13,15 +13,15 @@ import { parse } from 'yaml';
 export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('json2dart.convertFromClipboard', async () => {
+		vscode.commands.registerCommand('json4dart.convertFromClipboard', async () => {
 			convertToDart();
 		}));
 	context.subscriptions.push(
-		vscode.commands.registerCommand('json2dart.convertFromClipboardToFolder', async (e) => {
+		vscode.commands.registerCommand('json4dart.convertFromClipboardToFolder', async (e) => {
 			convertToDart(e.path);
 		}));
 	context.subscriptions.push
-		(vscode.commands.registerCommand('json2dart.convertFromClipboardToFile', async (e) => {
+		(vscode.commands.registerCommand('json4dart.convertFromClipboardToFile', async (e) => {
 			const path = e.path.toString() as string;
 			const i = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")) + 1;
 			convertToDart(e.path.substring(0, i), e.path.substring(i));
@@ -50,16 +50,6 @@ async function convertToDart(folder?: string, file?: string) {
 		return;
 	}
 
-	const typeCheck = jsonToDartConfig.typeChecking ??
-		(await vscode.window.showQuickPick(["Yes", "No"], {
-			placeHolder: "Need type checking?"
-		}) === "Yes");
-
-	const checkIsNull = jsonToDartConfig.typeChecking ??
-		(await vscode.window.showQuickPick(["Yes", "No"], {
-			placeHolder: "Need check nullable?"
-		}) === "Yes");
-
 	const packageAndClass = value?.toString() ?? "";
 
 	const paths = packageAndClass.split(".");
@@ -86,7 +76,7 @@ async function convertToDart(folder?: string, file?: string) {
 		const copyWithMethod = jsonToDartConfig.copyWithMethod ?? false;
 		const nullValueDataType = jsonToDartConfig.nullValueDataType;
 		const { tabSize } = vscode.workspace.getConfiguration("editor", { languageId: "dart" });
-		const converter = new JsonToDart(tabSize, typeCheck, nullValueDataType, nullSafety, checkIsNull);
+		const converter = new JsonToDart(tabSize, nullValueDataType, nullSafety);
 		converter.setIncludeCopyWitMethod(copyWithMethod);
 		converter.setMergeArrayApproach(mergeArrayApproach);
 		const code = converter.parse(className, obj).map(r => r.code).join("\n");
