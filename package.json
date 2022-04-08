@@ -2,7 +2,7 @@
 	"name": "json4dart",
 	"displayName": "FDN Json 4 Dart",
 	"description": "Plain object to Dart Object",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"publisher": "fdenisnascimento",
 	"keywords": [
 		"json",
