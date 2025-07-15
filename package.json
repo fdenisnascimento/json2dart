@@ -1,30 +1,37 @@
 {
 	"name": "json4dart",
-	"displayName": "FDN Json 4 Dart",
-	"description": "Plain object to Dart Object",
-	"version": "1.0.1",
+	"displayName": "FDN Json4Dart",
+	"description": "Convert JSON to Dart classes - Compatible with VSCode and Cursor",
+	"version": "2.0.0",
 	"publisher": "fdenisnascimento",
+	"author": {
+		"name": "Denis Nascimento",
+		"email": "fdenisnascimento@gmail.com",
+		"url": "https://github.com/fdenisnascimento"
+	},
+	"license": "MIT",
 	"keywords": [
 		"json",
 		"dart",
 		"flutter",
 		"json to dart",
-		"plain object"
+		"converter",
+		"cursor",
+		"vscode"
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/fdenisnascimento/json4dart.git"
+		"url": "https://github.com/fdenisnascimento/json2dart.git"
 	},
+	"bugs": {
+		"url": "https://github.com/fdenisnascimento/json2dart/issues"
+	},
+	"homepage": "https://github.com/fdenisnascimento/json2dart#readme",
 	"engines": {
-		"vscode": "^1.52.0"
+		"vscode": "^1.75.0"
 	},
 	"categories": [
 		"Other"
-	],
-	"activationEvents": [
-		"onCommand:json4dart.convertFromClipboard",
-		"onCommand:json4dart.convertFromClipboardToFile",
-		"onCommand:json4dart.convertFromClipboardToFolder"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
@@ -32,48 +39,52 @@
 			"explorer/context": [
 				{
 					"when": "resourceLangId == dart",
-					"command": "json4dart.convertFromClipboardToFile",
-					"group": "json4dart@1"
+					"command": "json2dart.convertFromClipboardToFile",
+					"group": "json2dart@1"
 				},
 				{
 					"when": "explorerResourceIsFolder",
-					"command": "json4dart.convertFromClipboardToFolder",
-					"group": "json4dart@1"
+					"command": "json2dart.convertFromClipboardToFolder",
+					"group": "json2dart@1"
 				}
 			],
 			"editor/context": [
 				{
 					"when": "resourceLangId == dart",
-					"command": "json4dart.convertFromClipboardToFile",
-					"group": "json4dart@1"
+					"command": "json2dart.convertFromClipboardToFile",
+					"group": "json2dart@1"
 				}
 			]
 		},
 		"commands": [
 			{
-				"command": "json4dart.convertFromClipboard",
-				"title": "json4dart: Convert JSON from Clipboard"
+				"command": "json2dart.convertFromClipboard",
+				"title": "json2dart: Convert JSON from Clipboard"
 			},
 			{
-				"command": "json4dart.convertFromClipboardToFile",
+				"command": "json2dart.convertFromClipboardToFile",
 				"title": "Convert JSON from Clipboard Here"
 			},
 			{
-				"command": "json4dart.convertFromClipboardToFolder",
+				"command": "json2dart.convertFromClipboardToFolder",
 				"title": "Convert JSON from Clipboard Here"
 			}
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "yarn run package",
-		"compile": "webpack --config ./build/node-extension.webpack.config.js",
-		"watch": "webpack --config ./build/node-extension.webpack.config.js",
-		"package": "webpack --mode production --devtool hidden-source-map --config ./build/node-extension.webpack.config.js",
-		"test-compile": "tsc -p ./",
-		"test-watch": "tsc -watch -p ./",
-		"pretest": "yarn run test-compile && yarn run lint",
-		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js"
+		"vscode:prepublish": "npm run package",
+		"compile": "npx webpack --config ./build/node-extension.webpack.config.js",
+		"watch": "npx webpack --watch --config ./build/node-extension.webpack.config.js",
+		"package": "npx webpack --mode production --devtool hidden-source-map --config ./build/node-extension.webpack.config.js",
+		"test-compile": "npx tsc -p ./",
+		"test-watch": "npx tsc -watch -p ./",
+		"pretest": "npm run test-compile && npm run lint",
+		"lint": "npx eslint src --ext ts",
+		"test": "node ./out/test/runTest.js",
+		"publish:vscode": "npx @vscode/vsce publish",
+		"publish:openvsx": "npx ovsx publish",
+		"publish:all": "npm run publish:vscode && npm run publish:openvsx",
+		"package:vsix": "npx @vscode/vsce package"
 	},
 	"devDependencies": {
 		"@types/camelcase": "^5.2.0",
@@ -84,14 +95,18 @@
 		"@types/node": "^12.20.47",
 		"@types/vscode": "^1.52.0",
 		"@types/yaml": "^1.9.7",
-		"@typescript-eslint/eslint-plugin": "^4.9.0",
-		"@typescript-eslint/parser": "^4.9.0",
-		"eslint": "^7.15.0",
+		"@typescript-eslint/eslint-plugin": "^6.0.0",
+		"@typescript-eslint/parser": "^6.0.0",
+		"@vscode/vsce": "^3.6.0",
+		"ajv": "^8.17.1",
+		"eslint": "^8.57.0",
 		"fs-extra": "^9.0.1",
 		"glob": "^7.1.6",
 		"mocha": "^8.1.3",
+		"ovsx": "^0.8.3",
 		"ts-loader": "^8.0.11",
 		"typescript": "^4.1.2",
+		"vsce": "^2.15.0",
 		"vscode-test": "^1.4.1",
 		"webpack": "^5.10.0",
 		"webpack-cli": "^4.2.0"
