@@ -2,7 +2,7 @@
 	"name": "json4dart",
 	"displayName": "FDN Json4Dart",
 	"description": "Convert JSON to Dart classes - Compatible with VSCode and Cursor",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"publisher": "fdenisnascimento",
 	"author": {
 		"name": "Denis Nascimento",
@@ -112,6 +112,7 @@
 		"webpack-cli": "^4.2.0"
 	},
 	"dependencies": {
+		"camelcase": "^8.0.0",
 		"lodash": "^4.17.21"
 	}
 }

@@ -1,6 +1,7 @@
-const camelcase = require('camelcase');
+import camelCase from 'camelcase';
 
-class JsonToDart {
+class JsonToDart
+{
     classNames: Array<String> = [];
     classModels: Array<Result> = [];
     indentText: String;
@@ -11,61 +12,75 @@ class JsonToDart {
     nullValueDataType: String;
     handlerSymbol: String;
     shouldCheckIsNull: boolean;
-    constructor(tabSize: number, shouldCheckType?: boolean, nullValueDataType?: String, nullSafety?: boolean, shouldCheckIsNull?: boolean) {
-        this.indentText = " ".repeat(tabSize);
+    constructor (tabSize: number, shouldCheckType?: boolean, nullValueDataType?: String, nullSafety?: boolean, shouldCheckIsNull?: boolean)
+    {
+        this.indentText = " ".repeat(Math.max(1, tabSize || 2)); // Ensure minimum 1 space and handle undefined
         this.shouldCheckType = shouldCheckType ?? false;
         this.nullValueDataType = nullValueDataType ?? "dynamic";
         this.nullSafety = nullSafety ?? true;
-        this.handlerSymbol = nullSafety ? "?" : "";
+        this.handlerSymbol = this.nullSafety ? "?" : "";
         this.shouldCheckIsNull = shouldCheckIsNull ?? false;
     }
 
-    setIncludeCopyWitMethod(b: boolean) {
+    setIncludeCopyWitMethod(b: boolean)
+    {
         this.includeCopyWitMethod = b;
     }
-    setMergeArrayApproach(b: boolean) {
+    setMergeArrayApproach(b: boolean)
+    {
         this.mergeArrayApproach = b;
     }
 
-    addClass(className: String, classModel: String) {
+    addClass(className: String, classModel: String)
+    {
         this.classModels.splice(0, 0, {
             code: classModel,
             className: className,
         });
     }
 
-    findDataType(key: String, value: any,): TypeObj {
+    findDataType(key: String, value: any,): TypeObj
+    {
         let type = "dynamic" as String;
         const typeObj = new TypeObj();
-        if (value === null || value === undefined) {
+        if(value === null || value === undefined)
+        {
             type = this.nullValueDataType;
             typeObj.isPrimitive = true;
-        } else if (Number.isInteger(value)) {
+        } else if(Number.isInteger(value))
+        {
             type = "int";
             typeObj.isPrimitive = true;
         }
-        else if ((typeof value) === "number") {
+        else if((typeof value) === "number")
+        {
             type = "double";
             typeObj.isPrimitive = true;
-        } else if ((typeof value) === "string") {
+        } else if((typeof value) === "string")
+        {
             type = "String";
             typeObj.isPrimitive = true;
-        } else if ((typeof value) === "boolean") {
+        } else if((typeof value) === "boolean")
+        {
             type = "bool";
             typeObj.isPrimitive = true;
         }
-        else if (value instanceof Array) {
+        else if(value instanceof Array)
+        {
             const temp = value as Array<any>;
             typeObj.isArray = true;
-            if (temp.length === 0) {
+            if(temp.length === 0)
+            {
                 type = "List<dynamic>";
-            } else {
+            } else
+            {
                 const _type = this.findDataType(key, temp[0]);
                 typeObj.typeRef = _type;
                 typeObj.isPrimitive = _type.isPrimitive;
-                type = `List<${_type.type}>`;
+                type = `List<${ _type.type }>`;
             }
-        } else if ((typeof value) === "object") {
+        } else if((typeof value) === "object")
+        {
             typeObj.isObject = true;
             type = this.toClassName(key);
             this.parse(type, value);
@@ -78,7 +93,8 @@ class JsonToDart {
             .filter(key => obj[key] !== null)
             .reduce((res, key) => ({ ...res, [key]: obj[key] }), {});
 
-    parse(className: String, json: any): Array<Result> {
+    parse(className: String, json: any): Array<Result>
+    {
 
         className = this.toClassName(className);
         this.classNames.push(className);
@@ -89,63 +105,70 @@ class JsonToDart {
         const toJsonCode: Array<String> = [];
         const constructorInit: Array<String> = [];
         const copyWithAssign: Array<String> = [];
-        if (json) {
-            if (Array.isArray(json) && json.length > 0) {
-                json = this.mergeArrayApproach ? json.reduce((p, c) => {
+        if(json)
+        {
+            if(Array.isArray(json) && json.length > 0)
+            {
+                json = this.mergeArrayApproach ? json.reduce((p, c) =>
+                {
                     return {
                         ...p,
                         ...this.removeNull(c),
                     };
                 }, {}) : json[0];
             }
-            Object.entries(json).forEach(entry => {
+            Object.entries(json).forEach(entry =>
+            {
                 const key = entry[0];
                 const value = entry[1];
                 const typeObj = this.findDataType(key, value);
-                const type = `${typeObj.type}${this.handlerSymbol}`;
-                const paramName = camelcase(key);
-                if (type != 'dynamic') {
-                    parameters.push(this.toCode(1, `${type}?`, paramName));
-                } else {
+                const type = `${ typeObj.type }${ this.handlerSymbol }`;
+                const paramName = camelCase(key.toString());
+                if(type !== 'dynamic')
+                {
+                    parameters.push(this.toCode(1, `${ type }?`, paramName));
+                } else
+                {
                     parameters.push(this.toCode(1, type, paramName));
                 }
 
                 this.addFromJsonCode(key, typeObj, fromJsonCode);
                 this.addToJsonCode(key, typeObj, toJsonCode);
-                if (this.includeCopyWitMethod) {
+                if(this.includeCopyWitMethod)
+                {
                     parametersForMethod.push(this.toMethodParams(2, type, paramName));
-                    copyWithAssign.push(`${this.indent(2)}${paramName}: ${paramName} ?? this.${paramName}`);
+                    copyWithAssign.push(`${ this.indent(2) }${ paramName }: ${ paramName } ?? this.${ paramName }`);
 
                 }
-                constructorInit.push(`this.${paramName}`);
+                constructorInit.push(`this.${ paramName }`);
             });
         }
 
         const copyWithCode = this.includeCopyWitMethod ?
             `
 
-${this.indent(1)}${className} copyWith({
-${parametersForMethod.join("\n")}
-${this.indent(1)}}) => ${className}(${copyWithAssign.length ? `{
-${copyWithAssign.join(",\n")},
-${this.indent(1)}}` : ""});` : '';
+${ this.indent(1) }${ className } copyWith({
+${ parametersForMethod.join("\n") }
+${ this.indent(1) }}) => ${ className }(${ copyWithAssign.length ? `{
+${ copyWithAssign.join(",\n") },
+${ this.indent(1) }}` : "" });` : '';
 
         const parametersCode = parameters.length ? `
-${parameters.join("\n")}
+${ parameters.join("\n") }
 `: "";
         const code = `
-class ${className} {${parametersCode}
-${this.indent(1)}${className}(${constructorInit.length ? `{${constructorInit.join(", ")}}` : ""});
+class ${ className } {${ parametersCode }
+${ this.indent(1) }${ className }(${ constructorInit.length ? `{${ constructorInit.join(", ") }}` : "" });
 
-${this.indent(1)}${className}.fromJson(Map<String, dynamic> json) {
-${fromJsonCode.join("\n")}
-${this.indent(1)}}
+${ this.indent(1) }${ className }.fromJson(Map<String, dynamic> json) {
+${ fromJsonCode.join("\n") }
+${ this.indent(1) }}
 
-${this.indent(1)}Map<String, dynamic> toJson() {
-${this.indent(2)}final Map<String, dynamic> _data =  <String, dynamic>{};
-${toJsonCode.join("\n")}
-${this.indent(2)}return _data;
-${this.indent(1)}}${this.includeCopyWitMethod ? copyWithCode : ""}
+${ this.indent(1) }Map<String, dynamic> toJson() {
+${ this.indent(2) }final Map<String, dynamic> _data =  <String, dynamic>{};
+${ toJsonCode.join("\n") }
+${ this.indent(2) }return _data;
+${ this.indent(1) }}${ this.includeCopyWitMethod ? copyWithCode : "" }
 }`;
 
         this.addClass(className, code);
@@ -155,38 +178,45 @@ ${this.indent(1)}}${this.includeCopyWitMethod ? copyWithCode : ""}
     }
 
 
-    toClassName(name: String): String {
-        name = camelcase(name, { pascalCase: true });
+    toClassName(name: String): String
+    {
+        name = camelCase(name.toString(), { pascalCase: true });
         let i = 0;
         let className = name;
-        while (this.classNames.includes(className)) {
+        while(this.classNames.includes(className))
+        {
             ++i;
-            className = `${name}${i}`;
+            className = `${ name }${ i }`;
         }
 
         return className;
     }
 
-    r = (type: TypeObj): String => {
+    r = (type: TypeObj): String =>
+    {
 
-        if (type.typeRef !== undefined) {
-            return `(e)=> e == null ? [] : (e as List).map(${this.r(type.typeRef)}).toList()`;
+        if(type.typeRef !== undefined)
+        {
+            return `(e)=> e == null ? [] : (e as List).map(${ this.r(type.typeRef) }).toList()`;
         }
-        return `(e)=>${type.type}.fromJson(e)`;
+        return `(e)=>${ type.type }.fromJson(e)`;
     };
 
 
-    p = (type: TypeObj): String => {
+    p = (type: TypeObj): String =>
+    {
 
-        if (type.typeRef !== undefined) {
-            return `(e)=>e?.map(${this.p(type.typeRef)})?.toList() ?? []`;
+        if(type.typeRef !== undefined)
+        {
+            return `(e)=>e?.map(${ this.p(type.typeRef) })?.toList() ?? []`;
         }
         return `(e)=>e.toJson()`;
     };
 
-    addFromJsonCode(key: String, typeObj: TypeObj, fromJsonCode: Array<String>) {
+    addFromJsonCode(key: String, typeObj: TypeObj, fromJsonCode: Array<String>)
+    {
         const type = typeObj.type;
-        const paramName = `${camelcase(key)}`;
+        const paramName = `${ camelCase(key.toString()) }`;
         let indentTab = 2;
         // if (this.shouldCheckType && type !== "dynamic") {
         //     indentTab = 3;
@@ -198,69 +228,86 @@ ${this.indent(1)}}${this.includeCopyWitMethod ? copyWithCode : ""}
         //         fromJsonCode.push(this.toCondition(2, `if(json['${key}'] is ${type})`));
         //     }
         // }
-        if (typeObj.isObject) {
+        if(typeObj.isObject)
+        {
             fromJsonCode.push(this.toCode(indentTab,
-                paramName, "=", `json['${key}'] == null ? null : ${type}.fromJson(json['${key}'])`));
+                paramName, "=", `json['${ key }'] == null ? null : ${ type }.fromJson(json['${ key }'])`));
         }
-        else if (typeObj.isArray) {
-            if (typeObj.typeRef === undefined) {
+        else if(typeObj.isArray)
+        {
+            if(typeObj.typeRef === undefined)
+            {
                 fromJsonCode.push(this.toCode(indentTab,
-                    paramName, "=", `json['${key}'] ?? []`));
-            } else if (typeObj.isPrimitive) {
+                    paramName, "=", `json['${ key }'] ?? []`));
+            } else if(typeObj.isPrimitive)
+            {
                 fromJsonCode.push(this.toCode(indentTab,
-                    paramName, "=", `List<${typeObj.typeRef.type}>.from(json['${key}'])`));
-            } else {
+                    paramName, "=", `List<${ typeObj.typeRef.type }>.from(json['${ key }'])`));
+            } else
+            {
                 fromJsonCode.push(this.toCode(indentTab,
-                    paramName, "=", `(json['${key}'] as List).map(${this.r(typeObj.typeRef)}).toList()`));
+                    paramName, "=", `(json['${ key }'] as List).map(${ this.r(typeObj.typeRef) }).toList()`));
             }
         }
-        else {
-            fromJsonCode.push(this.toCode(indentTab, paramName, "=", `json['${key}']`));
+        else
+        {
+            fromJsonCode.push(this.toCode(indentTab, paramName, "=", `json['${ key }']`));
         }
     }
 
-    addToJsonCode(key: String, typeObj: TypeObj, fromJsonCode: Array<String>) {
-        const paramName = `${camelcase(key)}`;
-        const paramCode = `_data['${key}']`;
-        if (typeObj.isObject) {
+    addToJsonCode(key: String, typeObj: TypeObj, fromJsonCode: Array<String>)
+    {
+        const paramName = `${ camelCase(key.toString()) }`;
+        const paramCode = `_data['${ key }']`;
+        if(typeObj.isObject)
+        {
             fromJsonCode.push(this.toCode(3,
-                paramCode, "=", `${paramName}${this.handlerSymbol}?.toJson()`));
+                paramCode, "=", `${ paramName }${ this.handlerSymbol }?.toJson()`));
         }
-        else if (typeObj.isArray) {
-            if (typeObj.isPrimitive || typeObj.typeRef === undefined) {
+        else if(typeObj.isArray)
+        {
+            if(typeObj.isPrimitive || typeObj.typeRef === undefined)
+            {
                 fromJsonCode.push(this.toCode(3,
                     paramCode, "=", paramName));
-            } else {
+            } else
+            {
                 fromJsonCode.push(this.toCode(3,
                     paramCode, "=",
-                    `${paramName}${this.handlerSymbol}?.map(${this.p(typeObj.typeRef)}).toList()`));
+                    `${ paramName }${ this.handlerSymbol }?.map(${ this.p(typeObj.typeRef) }).toList()`));
             }
         }
-        else {
+        else
+        {
             fromJsonCode.push(this.toCode(2,
                 paramCode, "=", paramName));
         }
     }
 
 
-    indent(count: number): String {
+    indent(count: number): String
+    {
         return this.indentText.repeat(count);
     }
 
-    toCode(count: number, ...text: Array<String>): String {
-        return `${this.indent(count)}${text.join(" ")};`;
+    toCode(count: number, ...text: Array<String>): String
+    {
+        return `${ this.indent(count) }${ text.join(" ") };`;
     }
-    toMethodParams(count: number, ...text: Array<String>): String {
-        return `${this.indent(count)}${text.join(" ")},`;
+    toMethodParams(count: number, ...text: Array<String>): String
+    {
+        return `${ this.indent(count) }${ text.join(" ") },`;
     }
 
-    toCondition(count: number, ...text: Array<String>): String {
-        return `${this.indent(count)}${text.join(" ")}`;
+    toCondition(count: number, ...text: Array<String>): String
+    {
+        return `${ this.indent(count) }${ text.join(" ") }`;
     }
 }
 
 
-class TypeObj {
+class TypeObj
+{
     type: String = "dynamic";
     defaultValue: String = "''";
     typeRef!: TypeObj;
